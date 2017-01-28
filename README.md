@@ -45,3 +45,7 @@
 
 # Примеры
 Прототипы примеров: combos config и aggregator tracer
+
+
+# Полезные ссылки
+* http://www.artima.com/designtechniques/cohesion1.html
