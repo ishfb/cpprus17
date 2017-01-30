@@ -9,21 +9,6 @@ using namespace std;
 using UserId = int;
 using RegionId = int;
 
-struct Tariff {
-    int costPerMinute;
-
-    int GetCharge(int duration) const {
-        return costPerMinute * duration;
-    }
-};
-
-struct UserAccount {
-    int money;
-    int tariff;
-};
-
-void
-
 class Billing {
 public:
     Billing(string userAccountDatabase, string tariffsDatabase);
@@ -33,6 +18,18 @@ public:
     void PrintStatsAsXml(ostream& os);
 
 private:
+    struct Tariff {
+        int costPerMinute;
+        int useCount = 0;
+    };
+
+    struct UserAccount {
+        int money;
+        int tariff;
+        int totalDuration = 0;
+        int blockCount = 0;
+    };
+
     void LoadUserAccounts(string db) { users.resize(1); }
     void LoadTariffs(string db) { tariffs.resize(1); }
     void SendSms(UserId user, string text);
@@ -48,15 +45,11 @@ Billing::Billing(string userAccountDatabase, string tariffsDatabase) {
 }
 
 void Billing::ChargePhoneCall(UserId user, int duration) {
-    if (u.money <= 0) {
-        u.failCount++;
-        return;
-    }
-
     auto& u = users[user];
     u.money -= tariffs[u.tariff].costPerMinute * duration;
     if (users[user].money <= 0) {
         SendSms(user, "Account is blocked");
+        u.blockCount++;
     }
 
     tariffs[u.tariff].useCount++;
