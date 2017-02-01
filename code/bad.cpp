@@ -30,21 +30,23 @@ void ApplyCharge(UserAccount& ua, int charge) {
 	ua.money -= charge;
 }
 
+vector<UserAccount> LoadUserAccounts(string db) {
+	return vector<UserAccount>(1);
+}
+
+vector<Tariff> LoadTariffs(string db) {
+	return vector<Tariff>(1);
+}
+
 class Billing {
 public:
-	Billing(string userAccountDatabase, string tariffsDatabase);
+	Billing(vector<UserAccount> users, vector<Tariff> tariffs);
 
 	void ChargePhoneCall(UserId user, int duration);
 	void AddMoney(UserId user, int money);
 	void PrintStatsAsXml(ostream& os);
 
 private:
-	void LoadUserAccounts(string db) {
-		users.resize(1);
-	}
-	void LoadTariffs(string db) {
-		tariffs.resize(1);
-	}
 	void SendSms(UserId user, string text);
 
 	vector<UserAccount> users;
@@ -52,9 +54,10 @@ private:
 	int smsSent = 0;
 };
 
-Billing::Billing(string userAccountDatabase, string tariffsDatabase) {
-	LoadUserAccounts(userAccountDatabase);
-	LoadTariffs(tariffsDatabase);
+Billing::Billing(vector<UserAccount> users, vector<Tariff> tariffs)
+	: users(std::move(users))
+	, tariffs(std::move(tariffs))
+{
 }
 
 void Billing::ChargePhoneCall(UserId user, int duration) {
@@ -64,8 +67,8 @@ void Billing::ChargePhoneCall(UserId user, int duration) {
 		return;
 	}
 
-	u.money -= tariffs[u.tariff].costPerMinute * duration;
-	if (users[user].money <= 0) {
+	ApplyCharge(u, tariffs[u.tariff].GetCharge(duration));
+	if (u.money <= 0) {
 		SendSms(user, "Account is blocked");
 	}
 
@@ -102,12 +105,40 @@ void TestPhoneCallDoesntIncreaseMoney() {
 	assert(ua.money <= 10);
 }
 
+void TestNoCallNoCharge() {
+	const Tariff mostPopular { 1 };
+	UserAccount ua;
+	ua.money = 10;
+
+	ApplyCharge(ua, mostPopular.GetCharge(0));
+	assert(ua.money == 10);
+}
+
+void MyTool() {
+	const Tariff experimental{12};
+
+	for (auto& u : LoadUserAccounts("users.sql")) {
+		u.tariff = 0;
+		Billing billing({u}, {experimental});
+
+		vector<int> history;
+		for (auto duration : history) {
+			billing.ChargePhoneCall(0, duration); // Sends SMS
+		}
+
+		billing.PrintStatsAsXml(cout); // Have to parse XML
+	}
+}
+
 int main() {
-	Billing billing("", "");
+	Billing billing(LoadUserAccounts("users.sql"), LoadTariffs("tariffs.sql"));
 	billing.ChargePhoneCall(0, 15);
 	billing.AddMoney(0, 150);
 
 	TestPhoneCallDoesntIncreaseMoney();
+	TestNoCallNoCharge();
 	cout << "Tests are OK";
+
+	MyTool();
 	return 0;
 }
