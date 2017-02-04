@@ -29,31 +29,19 @@ using namespace std;
 
 class Event {
 public:
+	static Event Payment(int rubles) { return {}; }
+	static Event PhoneCall(int minutes) { return {}; }
+
 	bool IsPayment() const { return false; }
 	int GetMoney() const { return 5; }
 	int GetDuration() const { return 3; }
 };
 
-class UserHistory {
-public:
-	const vector<Event>& GetEvents() const {
-		static const vector<Event> res;
-		return res;
-	}
+struct Tariff {
+	int costPerMinute_;
 
-	void AddPhoneCall(int duration, int cost) {}
-	void AddPayment(int rubles) {}
-};
-
-struct UserStats {
-	int callCount_ = 0;
-	int totalDuration_ = 0;
-	int moneySpent_ = 0;
-
-	void AddPhoneCall(int minutes, int cost) {
-		++callCount_;
-		totalDuration_ += minutes;
-		moneySpent_ += cost;
+	int GetCost(int minutes) const {
+		return minutes * costPerMinute_;
 	}
 };
 
@@ -69,19 +57,31 @@ struct UserAccount {
 	}
 };
 
-struct UserInfo {
-	int tariff_;
-	UserAccount account_;
-	UserHistory history_;
-	UserStats stats_;
+struct UserStats {
+	void AddPhoneCall(int minutes, int cost) {
+		++callCount_;
+		totalDuration_ += minutes;
+		moneySpent_ += cost;
+	}
+
+	void PrintAsJson() const {
+		cout << "{"
+			<< R"("callCount":)" << callCount_ << ","
+			<< R"("totalDuration":)" << totalDuration_ << ","
+			<< R"("moneySpent":)" << moneySpent_
+			<< "}";
+	}
+
+	int callCount_ = 0;
+	int totalDuration_ = 0;
+	int moneySpent_ = 0;
 };
 
-struct Tariff {
-	int costPerMinute_;
-
-	int GetCost(int minutes) const {
-		return costPerMinute_ * minutes;
-	}
+struct UserInfo {
+	int tariff_ = 0;
+	UserAccount account_;
+	UserStats stats_;
+	vector<Event> history_;
 };
 
 class Billing {
@@ -96,23 +96,32 @@ public:
 		UserInfo& user = users_[userId];
 		const Tariff& t = tariffs_[user.tariff_];
 
-		int cost = t.GetCost(minutes);
-		user.account_.ApplyCharge(cost);
-		user.history_.AddPhoneCall(minutes, cost);
-		user.stats_.AddPhoneCall(minutes, cost);
+		int charge = t.GetCost(minutes);
+		user.account_.ApplyCharge(charge);
+		user.history_.push_back(Event::PhoneCall(minutes));
 
 		if (user.account_.money_ <= 0) {
 			SendSms(userId, "Your balance is " + to_string(user.account_.money_));
 		}
+
+		user.stats_.AddPhoneCall(minutes, charge);
 	}
 
 	void AddMoney(int userId, int rubles) {
-		UserInfo& user = users_[userId];
-
-		user.account_.ApplyPayment(rubles);
-		user.history_.AddPayment(rubles);
-
+		users_[userId].account_.ApplyCharge(rubles);
+		users_[userId].history_.push_back(Event::Payment(rubles));
 		SendSms(userId, "Got payment " + to_string(rubles));
+	}
+
+	void PrintStatsAsJson() {
+		cout << "[";
+		for (size_t i = 0; i < users_.size(); ++i) {
+			users_[i].stats_.PrintAsJson();
+			if (i + 1 < users_.size()) {
+				cout << ",";
+			}
+		}
+		cout << "]";
 	}
 
 private:
@@ -138,7 +147,7 @@ void TestNoChargeForZeroMinutes() {
 }
 
 vector<UserInfo> LoadUsers(string /*db*/) {
-	UserInfo ui{0};
+	UserInfo ui;
 	return {ui};
 }
 
@@ -154,7 +163,7 @@ void MyTool() {
 	for (const auto& u : users) {
 		UserAccount ua{200};
 		UserStats stats;
-		for (const Event& e : u.history_.GetEvents()) {
+		for (const Event& e : u.history_) {
 			if (e.IsPayment()) {
 				ua.ApplyPayment(e.GetMoney());
 			} else {
@@ -175,12 +184,15 @@ void MyTool() {
 int main() {
 	Billing b(LoadUsers("users.sql"), LoadTariffs("tariffs.sql"));
 	b.ChargePhoneCall(0, 2);
-	b.AddMoney(0, 50);
+	b.AddMoney(0, 10);
+	b.PrintStatsAsJson();
+	cout << "Billing is OK" << endl;
 
 	TestPaymentDoesntIncreaseMoney();
 	TestNoChargeForZeroMinutes();
-	cout << "Test are OK\n";
+	cout << "Test are OK" << endl;
 
 	MyTool();
+
 	return 0;
 }
