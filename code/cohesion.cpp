@@ -29,12 +29,12 @@ using namespace std;
 
 class Event {
 public:
-	static Event Payment(int rubles) { return {}; }
-	static Event PhoneCall(int minutes) { return {}; }
+	static Event Payment(int rubles);
+	static Event PhoneCall(int minutes);
 
-	bool IsPayment() const { return false; }
-	int GetMoney() const { return 5; }
-	int GetDuration() const { return 3; }
+	bool IsPayment() const;
+	int GetMoney() const;
+	int GetDuration() const;
 };
 
 struct Tariff {
@@ -125,8 +125,7 @@ public:
 	}
 
 private:
-	void SendSms(int /*userId*/, string /*message*/) {
-	}
+	void SendSms(int userId, string message);
 
 	vector<UserInfo> users_;
 	vector<Tariff> tariffs_;
@@ -146,14 +145,8 @@ void TestNoChargeForZeroMinutes() {
 	assert(ua.money_ == 15);
 }
 
-vector<UserInfo> LoadUsers(string /*db*/) {
-	UserInfo ui;
-	return {ui};
-}
-
-vector<Tariff> LoadTariffs(string /*db*/) {
-	return {Tariff{5}};
-}
+vector<UserInfo> LoadUsers(string db);
+vector<Tariff> LoadTariffs(string db);
 
 void MyTool() {
 	const Tariff newTariff{2};
@@ -196,3 +189,23 @@ int main() {
 
 	return 0;
 }
+
+Event Event::Payment(int rubles) { return {}; }
+Event Event::PhoneCall(int minutes) { return {}; }
+
+bool Event::IsPayment() const { return false; }
+int Event::GetMoney() const { return 5; }
+int Event::GetDuration() const { return 3; }
+
+void Billing::SendSms(int userId, string message) {
+}
+
+vector<UserInfo> LoadUsers(string) {
+	UserInfo ui;
+	return {ui};
+}
+
+vector<Tariff> LoadTariffs(string db) {
+	return {Tariff{5}};
+}
+

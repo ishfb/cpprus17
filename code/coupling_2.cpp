@@ -56,17 +56,17 @@ public:
 	}
 
 private:
-	void LoadUsers(string db) { users_.resize(1); }
-	void LoadTariffs(string db) { tariffs_.resize(1); }
+	void LoadUsers(string db);
+	void LoadTariffs(string db);
 
 	class Event {
 	public:
-		static Event Payment(int rubles) { return {}; }
-		static Event PhoneCall(int minutes) { return {}; }
+		static Event Payment(int rubles);
+		static Event PhoneCall(int minutes);
 
-		bool IsPayment() const { return false; }
-		int GetMoney() const { return 5; }
-		int GetDuration() const { return 3; }
+		bool IsPayment() const;
+		int GetMoney() const;
+		int GetDuration() const;
 	};
 
 	struct Tariff {
@@ -108,8 +108,7 @@ private:
 		}
 
 	private:
-		void SendSms(string /*message*/) {
-		}
+		void SendSms(string message);
 
 		int money_;
 		int tariff_;
@@ -131,3 +130,16 @@ int main() {
 
 	return 0;
 }
+
+void Billing::UserInfo::SendSms(string message) {
+}
+
+Billing::Event Billing::Event::Payment(int rubles) { return {}; }
+Billing::Event Billing::Event::PhoneCall(int minutes) { return {}; }
+bool Billing::Event::IsPayment() const { return false; }
+int Billing::Event::GetMoney() const { return 5; }
+int Billing::Event::GetDuration() const { return 3; }
+
+void Billing::LoadUsers(string db) { users_.resize(1); }
+void Billing::LoadTariffs(string db) { tariffs_.resize(1); }
+
