@@ -49,6 +49,10 @@ struct UserAccount {
 
 struct UserStats {
     int moneySpent_ = 0;
+
+    void AddExpense(int rubles) {
+        moneySpent_ += rubles;
+    }
 };
 
 class Billing {
@@ -102,7 +106,7 @@ Billing::Billing(string usersDatabase, string tariffsDatabase) {
 
 void Billing::ChargePhoneCall(int userId, int minutes) {
     UserInfo& user = users_[userId];
-    Tariff& t = tariffs_[user.GetTariff()];
+    const Tariff& t = tariffs_[user.GetTariff()];
 
     user.ChargePhoneCall(minutes, t);
 
@@ -159,7 +163,7 @@ void Billing::UserInfo::ChargePhoneCall(int minutes, const Tariff& tariff) {
     account_.ApplyCharge(cost);
     history_.push_back(Event::PhoneCall(minutes));
 
-    stats_.moneySpent_ += cost;
+    stats_.AddExpense(cost);
 }
 
 void Billing::UserInfo::AddMoney(int rubles) {
@@ -193,7 +197,7 @@ void Billing::LoadUsers(string db) {
 
 void Billing::PrintStatsAsXml() {
     cout << "<sms>" << smsSent_ << "</sms>";
-    for (const auto& u : users_) {
+    for (const UserInfo& u : users_) {
         cout << "<spent>" << u.GetStats().moneySpent_ << "</spent>";
     }
 }
