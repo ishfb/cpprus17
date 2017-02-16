@@ -141,15 +141,14 @@ void TestPayment() {
     assert(ua.money_ == 25);
 }
 
-void MyTool() {
+void InvestigateNewTariff() {
     const Tariff newTariff{2};
-
-    auto users = LoadUsers("users.sql");
+    vector<UserInfo> users = LoadUsers("users.sql");
     int negativeBalanceCount = 0;
-    for (const auto& u : users) {
-        UserAccount ua{200};
+    for (const UserInfo& realUser : users) {
+        UserAccount ua{500};
         UserStats stats;
-        for (const Event& e : u.GetHistory()) {
+        for (const Event& e : realUser.GetHistory()) {
             if (e.IsPayment()) {
                 ua.ApplyPayment(e.GetMoney());
             } else {
@@ -163,7 +162,6 @@ void MyTool() {
         }
         cout << stats.moneySpent_ << endl;
     }
-
     cout << negativeBalanceCount << endl;
 }
 
