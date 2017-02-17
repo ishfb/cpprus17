@@ -102,10 +102,9 @@ void Billing::AddMoney(int userId, int rubles) {
     users_[userId].AddMoney(rubles);
 }
 
-void TestChargeDoesntIncreaseMoney() {
-    UserAccount ua{15};
-    ua.ApplyCharge(10);
-    assert(ua.money_ <= 15);
+void TestTalkMorePayMore() {
+    const Tariff tariff{1};
+    assert(tariff.GetCost(15) > tariff.GetCost(5));
 }
 
 void TestNoChargeForZeroMinutes() {
@@ -130,7 +129,7 @@ int main() {
     cout << "Production OK\n";
 
     TestNoChargeForZeroMinutes();
-    TestChargeDoesntIncreaseMoney();
+    TestTalkMorePayMore();
     TestPayment();
     cout << "Tests OK\n";
 
