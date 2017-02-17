@@ -78,7 +78,7 @@ private:
     int tariff_;
     UserStats stats_;
     UserAccount account_;
-    vector<Event> history_;
+    vector<Event> history_ = {Event{}, Event{}};
 };  // class Billing::UserInfo
 
 vector<UserInfo> LoadUsers(string db);
@@ -156,9 +156,9 @@ void InvestigateNewTariff() {
                 ua.ApplyCharge(cost);
                 stats.AddExpense(cost);
             }
-        }
-        if (ua.money_ < 0) {
-            ++negativeBalanceCount;
+            if (ua.money_ < 0) {
+                ++negativeBalanceCount;
+            }
         }
         cout << stats.moneySpent_ << endl;
     }
@@ -179,6 +179,8 @@ int main() {
     cout << "Tests OK\n";
 
     b.PrintStatsAsXml();
+
+    InvestigateNewTariff();
 
     return 0;
 }
